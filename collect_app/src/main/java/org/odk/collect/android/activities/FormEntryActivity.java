@@ -289,6 +289,7 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     MediaLoadingFragment mediaLoadingFragment;
+    private boolean addingInline;
 
     @Override
     public void allowSwiping(boolean doSwipe) {
@@ -1045,10 +1046,14 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                 return true;
             case R.id.track_location:
                 GeneralSharedPreferences.getInstance().save(KEY_BACKGROUND_LOCATION, !GeneralSharedPreferences.getInstance().getBoolean(KEY_BACKGROUND_LOCATION, true));
-
                 backgroundLocationViewModel.backgroundLocationPreferenceToggled();
                 return true;
+
+            case R.id.menu_add_repeat:
+                addingInline = true;
+                showNextView();
         }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -1722,7 +1727,6 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
             public void onCancelClicked() {
                 shownAlertDialogIsGroupRepeat = false;
 
-                //
                 // Make sure the error dialog will not disappear.
                 //
                 // When showNextView() popups an error dialog (because of a
@@ -1734,7 +1738,6 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                 // clicked,
                 // so instead of closing the first dialog, it closes the second.
                 new Thread() {
-
                     @Override
                     public void run() {
                         FormEntryActivity.this.runOnUiThread(() -> {
@@ -1744,7 +1747,12 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                                 //This is rare
                                 Timber.e(e);
                             }
-                            showNextView();
+
+                            if (addingInline) {
+                                showPreviousView();
+                            } else {
+                                showNextView();
+                            }
                         });
                     }
                 }.start();
