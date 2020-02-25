@@ -71,6 +71,8 @@ import com.google.zxing.integration.android.IntentResult;
 import org.apache.commons.io.IOUtils;
 import org.javarosa.core.model.FormDef;
 import org.javarosa.core.model.FormIndex;
+import org.javarosa.core.model.GroupDef;
+import org.javarosa.core.model.IFormElement;
 import org.javarosa.core.model.SelectChoice;
 import org.javarosa.core.model.data.IAnswerData;
 import org.javarosa.core.model.instance.TreeElement;
@@ -126,7 +128,6 @@ import org.odk.collect.android.preferences.AdminKeys;
 import org.odk.collect.android.preferences.AdminSharedPreferences;
 import org.odk.collect.android.preferences.GeneralKeys;
 import org.odk.collect.android.preferences.GeneralSharedPreferences;
-import org.odk.collect.android.preferences.PreferencesActivity;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import org.odk.collect.android.storage.StorageInitializer;
@@ -179,6 +180,7 @@ import timber.log.Timber;
 import static android.content.DialogInterface.BUTTON_NEGATIVE;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
 import static android.view.animation.AnimationUtils.loadAnimation;
+import static org.javarosa.form.api.FormEntryController.EVENT_PROMPT_NEW_REPEAT;
 import static org.odk.collect.android.analytics.AnalyticsEvents.LAUNCH_FORM_WITH_BG_LOCATION;
 import static org.odk.collect.android.analytics.AnalyticsEvents.SAVE_INCOMPLETE;
 import static org.odk.collect.android.preferences.AdminKeys.KEY_MOVING_BACKWARDS;
@@ -290,8 +292,8 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     MediaLoadingFragment mediaLoadingFragment;
-    private boolean addingInline;
     private FormEntryMenuDelegate optionsMenuDelegate;
+    private FormIndex previousFormIndex;
 
     @Override
     public void allowSwiping(boolean doSwipe) {
@@ -487,7 +489,6 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                 if (getFormController() != null) {
                     FormController formController = getFormController();
                     identityPromptViewModel.setAuditEventLogger(formController.getAuditEventLogger());
-                    formSaveViewModel.setFormController(formController);
                     refreshCurrentView();
                 } else {
                     Timber.w("Reloading form and restoring state.");
@@ -991,15 +992,21 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        if (optionsMenuDelegate.onItemSelected(item)) {
+            return true;
+        }
+
         FormController formController = getFormController();
         switch (item.getItemId()) {
             case R.id.menu_languages:
                 createLanguageDialog();
                 return true;
+
             case R.id.menu_save:
                 // don't exit
                 saveForm(DO_NOT_EXIT, InstancesDaoHelper.isInstanceComplete(false), null);
                 return true;
+
             case R.id.menu_goto:
                 state = null;
                 if (formController != null && formController.currentPromptIsQuestion()) {
@@ -1014,18 +1021,34 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                 Intent i = new Intent(this, FormHierarchyActivity.class);
                 startActivityForResult(i, RequestCodes.HIERARCHY_ACTIVITY);
                 return true;
-            case R.id.menu_preferences:
-                Intent pref = new Intent(this, PreferencesActivity.class);
-                startActivity(pref);
-                return true;
+
             case R.id.track_location:
                 GeneralSharedPreferences.getInstance().save(KEY_BACKGROUND_LOCATION, !GeneralSharedPreferences.getInstance().getBoolean(KEY_BACKGROUND_LOCATION, true));
                 backgroundLocationViewModel.backgroundLocationPreferenceToggled();
                 return true;
 
             case R.id.menu_add_repeat:
-                addingInline = true;
-                showNextView();
+                previousFormIndex = formController.getFormIndex();
+
+                FormDef formDef = formController.getFormDef();
+                FormIndex index = previousFormIndex;
+                FormIndex parentRepeatGroup = null;
+                while (index.getNextLevel() != null) {
+                    index = index.getNextLevel();
+
+                    IFormElement element = formDef.getChild(index);
+                    if (element instanceof GroupDef && ((GroupDef) element).getRepeat()) {
+                        parentRepeatGroup = index;
+                        break;
+                    }
+                }
+
+                if (parentRepeatGroup != null) {
+                    formController.jumpToIndex(parentRepeatGroup);
+                    formController.stepToNextEventType(EVENT_PROMPT_NEW_REPEAT);
+                }
+
+                refreshCurrentView();
         }
 
         return super.onOptionsItemSelected(item);
@@ -1205,7 +1228,7 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                 }
                 return odkView;
 
-            case FormEntryController.EVENT_PROMPT_NEW_REPEAT:
+            case EVENT_PROMPT_NEW_REPEAT:
                 createRepeatDialog();
                 return new EmptyView(this);
 
@@ -1453,7 +1476,7 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                     break;
                 case FormEntryController.EVENT_END_OF_FORM:
                 case FormEntryController.EVENT_REPEAT:
-                case FormEntryController.EVENT_PROMPT_NEW_REPEAT:
+                case EVENT_PROMPT_NEW_REPEAT:
                     next = createView(event, true);
                     showView(next, AnimationType.RIGHT);
                     break;
@@ -1495,7 +1518,7 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                             event = formController.stepToNextScreenEvent();
                             beenSwiped = false;
 
-                            if (event != FormEntryController.EVENT_PROMPT_NEW_REPEAT) {
+                            if (event != EVENT_PROMPT_NEW_REPEAT) {
                                 // Returning here prevents the same view sliding when user is on the first screen
                                 return;
                             }
@@ -1722,8 +1745,9 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                                 Timber.e(e);
                             }
 
-                            if (addingInline) {
-                                showPreviousView();
+                            if (previousFormIndex != null) {
+                                getFormController().jumpToIndex(previousFormIndex);
+                                refreshCurrentView();
                             } else {
                                 showNextView();
                             }
@@ -2371,7 +2395,6 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                 if (formController.getInstanceFile() == null) {
                     createInstanceDirectory(formController);
                     identityPromptViewModel.setAuditEventLogger(formController.getAuditEventLogger());
-                    formSaveViewModel.setFormController(formController);
 
                     identityPromptViewModel.requiresIdentityToContinue().observe(this, requiresIdentity -> {
                         if (!requiresIdentity) {
@@ -2388,7 +2411,6 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                         String formMode = reqIntent.getStringExtra(ApplicationConstants.BundleKeys.FORM_MODE);
                         if (formMode == null || ApplicationConstants.FormModes.EDIT_SAVED.equalsIgnoreCase(formMode)) {
                             identityPromptViewModel.setAuditEventLogger(formController.getAuditEventLogger());
-                            formSaveViewModel.setFormController(formController);
 
                             identityPromptViewModel.requiresIdentityToContinue().observe(this, requiresIdentity -> {
                                 if (!requiresIdentity) {
@@ -2421,7 +2443,6 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                         }
                     } else {
                         identityPromptViewModel.setAuditEventLogger(formController.getAuditEventLogger());
-                        formSaveViewModel.setFormController(formController);
 
                         identityPromptViewModel.requiresIdentityToContinue().observe(this, requiresIdentity -> {
                             if (!requiresIdentity) {
