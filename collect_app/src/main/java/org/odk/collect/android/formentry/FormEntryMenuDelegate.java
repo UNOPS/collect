@@ -26,11 +26,13 @@ public class FormEntryMenuDelegate {
     private final AppCompatActivity context;
     private final FormControllerProvider formControllerProvider;
     private final AnswersProvider answersProvider;
+    private final OnScreenChangedListener onScreenChangedListener;
 
-    public FormEntryMenuDelegate(AppCompatActivity context, FormControllerProvider formControllerProvider, AnswersProvider answersProvider) {
+    public FormEntryMenuDelegate(AppCompatActivity context, FormControllerProvider formControllerProvider, AnswersProvider answersProvider, OnScreenChangedListener onScreenChangedListener) {
         this.context = context;
         this.formControllerProvider = formControllerProvider;
         this.answersProvider = answersProvider;
+        this.onScreenChangedListener = onScreenChangedListener;
     }
 
     public void onCreate(MenuInflater menuInflater, Menu menu) {
@@ -84,6 +86,7 @@ public class FormEntryMenuDelegate {
             case R.id.menu_add_repeat:
                 getFormSaveViewModel().saveAnswersForScreen(answersProvider.getAnswers());
                 getFormEntryViewModel().promptForNewRepeat();
+                onScreenChangedListener.onViewChanged();
                 return true;
         }
 
@@ -106,5 +109,9 @@ public class FormEntryMenuDelegate {
         } else {
             return false;
         }
+    }
+
+    public interface OnScreenChangedListener {
+        void onViewChanged();
     }
 }
