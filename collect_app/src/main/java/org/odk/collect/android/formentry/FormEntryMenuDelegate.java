@@ -10,6 +10,8 @@ import androidx.lifecycle.ViewModelProviders;
 
 import org.odk.collect.android.R;
 import org.odk.collect.android.formentry.javarosawrapper.FormController;
+import org.odk.collect.android.formentry.questions.AnswersProvider;
+import org.odk.collect.android.formentry.saving.FormSaveViewModel;
 import org.odk.collect.android.preferences.AdminKeys;
 import org.odk.collect.android.preferences.AdminSharedPreferences;
 import org.odk.collect.android.preferences.GeneralSharedPreferences;
@@ -23,10 +25,12 @@ public class FormEntryMenuDelegate {
 
     private final AppCompatActivity context;
     private final FormControllerProvider formControllerProvider;
+    private final AnswersProvider answersProvider;
 
-    public FormEntryMenuDelegate(AppCompatActivity context, FormControllerProvider formControllerProvider) {
+    public FormEntryMenuDelegate(AppCompatActivity context, FormControllerProvider formControllerProvider, AnswersProvider answersProvider) {
         this.context = context;
         this.formControllerProvider = formControllerProvider;
+        this.answersProvider = answersProvider;
     }
 
     public void onCreate(MenuInflater menuInflater, Menu menu) {
@@ -78,6 +82,7 @@ public class FormEntryMenuDelegate {
                 return true;
 
             case R.id.menu_add_repeat:
+                getFormSaveViewModel().saveAnswersForScreen(answersProvider.getAnswers());
                 getFormEntryViewModel().promptForNewRepeat();
                 return true;
         }
@@ -87,6 +92,10 @@ public class FormEntryMenuDelegate {
 
     private FormEntryViewModel getFormEntryViewModel() {
         return ViewModelProviders.of(context).get(FormEntryViewModel.class);
+    }
+
+    private FormSaveViewModel getFormSaveViewModel() {
+        return ViewModelProviders.of(context).get(FormSaveViewModel.class);
     }
 
     private boolean isInRepeat() {
