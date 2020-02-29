@@ -93,6 +93,7 @@ import org.odk.collect.android.exception.JavaRosaException;
 import org.odk.collect.android.external.ExternalDataManager;
 import org.odk.collect.android.formentry.FormEntryMenuDelegate;
 import org.odk.collect.android.formentry.FormEntryViewModel;
+import org.odk.collect.android.formentry.FormIndexAnimationHandler;
 import org.odk.collect.android.formentry.FormLoadingDialogFragment;
 import org.odk.collect.android.formentry.ODKView;
 import org.odk.collect.android.formentry.QuitFormDialog;
@@ -207,7 +208,8 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
         CustomDatePickerDialog.CustomDatePickerDialogListener, RankingWidgetDialog.RankingListener,
         SaveFormIndexTask.SaveFormIndexListener, WidgetValueChangedListener,
         ScreenContext, FormLoadingDialogFragment.FormLoadingDialogFragmentListener,
-        AudioControllerView.SwipableParent {
+        AudioControllerView.SwipableParent,
+        FormIndexAnimationHandler.Listener {
 
     // Defines for FormEntryActivity
     private static final boolean EXIT = true;
@@ -292,6 +294,7 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
 
     MediaLoadingFragment mediaLoadingFragment;
     private FormEntryMenuDelegate optionsMenuDelegate;
+    private FormIndexAnimationHandler formIndexAnimationHandler;
 
     @Override
     public void allowSwiping(boolean doSwipe) {
@@ -353,11 +356,13 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
         questionHolder = findViewById(R.id.questionholder);
 
         initToolbar();
+
+        formIndexAnimationHandler = new FormIndexAnimationHandler(this);
         optionsMenuDelegate = new FormEntryMenuDelegate(
                 this,
                 this::getFormController,
                 () -> getCurrentViewIfODKView().getAnswers(),
-                this::animateToNextView
+                formIndexAnimationHandler
         );
 
         nextButton = findViewById(R.id.form_forward_button);
@@ -980,11 +985,14 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
      * out of sync due to dialogs and restarts caused by screen orientation
      * changes, so they're resynchronized here.
      */
+    @Override
     public void refreshCurrentView() {
         int event = getFormController().getEvent();
 
         View current = createView(event, false);
         showView(current, AnimationType.FADE);
+
+        formIndexAnimationHandler.setLastIndex(getFormController().getFormIndex());
     }
 
     @Override
@@ -1447,7 +1455,8 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
         }
     }
 
-    private void animateToNextView() {
+    @Override
+    public void animateToNextView() {
         int event = getFormController().getEvent();
 
         switch (event) {
@@ -1470,6 +1479,8 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                 Timber.w("JavaRosa added a new EVENT type and didn't tell us... shame on them.");
                 break;
         }
+
+        formIndexAnimationHandler.setLastIndex(getFormController().getFormIndex());
     }
 
     private boolean saveBeforeNextView(FormController formController) {
@@ -1549,10 +1560,13 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
         }
     }
 
-    private void animateToPreviousView() {
+    @Override
+    public void animateToPreviousView() {
         int event = getFormController().getEvent();
         View next = createView(event, false);
         showView(next, AnimationType.LEFT);
+
+        formIndexAnimationHandler.setLastIndex(getFormController().getFormIndex());
     }
 
     /**
@@ -1707,7 +1721,7 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
 
                 try {
                     formEntryViewModel.addRepeat(true);
-                    refreshCurrentView();
+                    formIndexAnimationHandler.handle(formEntryViewModel.getCurrentIndex());
                 } catch (Exception e) {
                     FormEntryActivity.this.createErrorDialog(
                             e.getMessage(), DO_NOT_EXIT);
@@ -1740,11 +1754,8 @@ public class FormEntryActivity extends CollectAbstractActivity implements Animat
                                 Timber.e(e);
                             }
 
-                            if (formEntryViewModel.cancelRepeatPrompt()) {
-                                animateToNextView();
-                            } else {
-                                animateToPreviousView();
-                            }
+                            formEntryViewModel.cancelRepeatPrompt();
+                            formIndexAnimationHandler.handle(formEntryViewModel.getCurrentIndex());
                         });
                     }
                 }.start();
