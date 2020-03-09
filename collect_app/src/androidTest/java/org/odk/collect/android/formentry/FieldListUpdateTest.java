@@ -317,7 +317,7 @@ public class FieldListUpdateTest {
         onView(withText("Target10-15")).check(doesNotExist());
 
         // FormEntryActivity expects an image at a fixed path so copy the app logo there
-        Bitmap icon = BitmapFactory.decodeResource(ApplicationProvider.getApplicationContext().getResources(), R.drawable.notes);
+        Bitmap icon = BitmapFactory.decodeResource(ApplicationProvider.getApplicationContext().getResources(), R.drawable.fieldsight);
         File tmpJpg = new File(new StoragePathProvider().getTmpFilePath());
         tmpJpg.createNewFile();
         FileOutputStream fos = new FileOutputStream(tmpJpg);

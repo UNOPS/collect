@@ -5,10 +5,28 @@
     <style name="Theme.Collect.Dark" parent="Theme.Collect.BaseDark">
         <item name="android:buttonStyle">@style/Widget.Collect.Button.Custom</item>
         <item name="imageButtonStyle">@style/Widget.Collect.ImageButton.Custom.Dark</item>
+<!--        <item name="colorPrimary">#2196F3</item>-->
+<!--        <item name="colorSecondary">#1976D2</item>-->
+<!--        <item name="colorError">#EF5350</item>-->
+<!--        <item name="colorSurface">#104881</item>-->
+<!--        <item name="colorOnPrimary">#FFFFFF</item>-->
+<!--        <item name="colorOnSecondary">#FFFFFF</item>-->
+<!--        <item name="colorOnBackground">#FFFFFF</item>-->
+<!--        <item name="colorOnError">#FFFFFF</item>-->
+<!--        <item name="colorOnSurface">#FFFFFF</item>-->
     </style>
 
     <style name="Theme.Collect.Light" parent="Theme.Collect.BaseLight">
         <item name="android:buttonStyle">@style/Widget.Collect.Button.Custom</item>
         <item name="imageButtonStyle">@style/Widget.Collect.ImageButton.Custom.Light</item>
+<!--        <item name="colorPrimary">#016699</item>-->
+<!--        <item name="colorSecondary">#2196F3</item>-->
+<!--        <item name="colorError">#F44336</item>-->
+<!--        <item name="colorSurface">#cfdff2</item>-->
+<!--        <item name="colorOnPrimary">#000000</item>-->
+<!--        <item name="colorOnSecondary">#000000</item>-->
+<!--        <item name="colorOnBackground">#000000</item>-->
+<!--        <item name="colorOnError">#000000</item>-->
+<!--        <item name="colorOnSurface">#000000</item>-->
     </style>
 </resources>

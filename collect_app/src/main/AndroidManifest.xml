@@ -73,9 +73,10 @@ the specific language governing permissions and limitations under the License.
 
     <application
         android:name=".application.Collect"
-        android:icon="@drawable/notes"
+        android:icon="@drawable/fieldsight"
         android:installLocation="auto"
         android:label="@string/app_name"
+        android:theme="@style/Theme.Collect.Light"
         android:largeHeap="true"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
