@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources>
+    <color name="light_theme_background">#EEEEFFFF</color>
+    <color name="dark_theme_background">#EE00224A</color>
 
     <style name="Theme.Collect.Dark" parent="Theme.Collect.BaseDark">
         <item name="android:buttonStyle">@style/Widget.Collect.Button.Custom</item>
         <item name="imageButtonStyle">@style/Widget.Collect.ImageButton.Custom.Dark</item>
         <item name="colorPrimary">#004976</item>
         <item name="colorSecondary">#0092D1</item>
-        <item name="colorSurface">#00224a</item>
+        <item name="colorSurface">#00224A</item>
+        <!-- For all windows -->
+        <item name="android:windowBackground">@color/dark_theme_background</item>
+        <!-- For menu items -->
+        <item name="android:colorBackground">@color/dark_theme_background</item>
+<!--        <item name="android:panelBackground">?colorSurface</item>-->
+<!--        <item name="android:windowBackground">?colorSurface</item>-->
+<!--        <item name="android:selectableItemBackground">?colorSurface</item>-->
+<!--        <item name="android:selectableItemBackgroundBorderless">?colorSurface</item>-->
 <!--        <item name="colorOnPrimary">#FFFFFF</item>-->
 <!--        <item name="colorOnSecondary">#FFFFFF</item>-->
 <!--        <item name="colorOnBackground">#FFFFFF</item>-->
@@ -18,9 +28,16 @@
     <style name="Theme.Collect.Light" parent="Theme.Collect.BaseLight">
         <item name="android:buttonStyle">@style/Widget.Collect.Button.Custom</item>
         <item name="imageButtonStyle">@style/Widget.Collect.ImageButton.Custom.Light</item>
-        <item name="colorPrimary">#90caf9</item>
-        <item name="colorSecondary">#29b6f6</item>
-<!--        <item name="colorSurface">#eeffff</item>-->
+        <item name="colorPrimary">#29B6F6</item>
+        <item name="colorSecondary">#90CAF9</item>
+        <item name="colorSurface">#EEFFFF</item>
+        <item name="android:windowBackground">@color/light_theme_background</item>
+        <item name="android:colorBackground">@color/light_theme_background</item>
+<!--        <item name="android:background">?colorSurface</item>-->
+<!--        <item name="android:panelBackground">?colorSurface</item>-->
+<!--        <item name="android:windowBackground">?colorSurface</item>-->
+<!--        <item name="android:selectableItemBackground">?colorSurface</item>-->
+<!--        <item name="android:selectableItemBackgroundBorderless">?colorSurface</item>-->
 <!--        <item name="colorError">#F44336</item>-->
 <!--        <item name="colorOnPrimary">#FFFFFF</item>-->
 <!--        <item name="primaryTextColor">#FFFFFF</item>-->
